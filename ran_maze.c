@@ -9,57 +9,129 @@
 #include<time.h>
 #include<string.h>
 
+#define SIZE 2*50 //地图大小 SIZE*SIZE
 
-#define N 2//关卡的数目
-#define M N*50 //地图大小 M*M
+int visit[SIZE][SIZE] = {0};
+int dx[4] = {1, 0, -1, 0};
+int dy[4] = {0, 1, 0, -1};
+struct stu
+{
+    int X;
+    int Y;
+    int pre;
+}Path[10000];
 
-
-int level = 0;//游戏等级
-int map[M + 1][M + 1] = {0};
+int map[SIZE + 1][SIZE + 1] = {0};
 int count;//地图大小
-int my_x, my_y;//我的位置
-char str[2 * (M + 1) * (M + 1)] = { '\0' };
+
 void Initialize(int count);//初始化地图
 void print();//打印函数
-void find();//找到自己
 void menu();//菜单选择难度和大小
 int IsHaveNeighbor();//判断当前方块处是否有邻居
 void Creat_01();//第一种创建方法
-
+void find_path();
+void out_put();
+int judge();
+void print_map();
 
 int main(void)
 {
-    int s[100][100] = {0};
     srand((unsigned)time(NULL));
     menu();
     Initialize(count);
     print();
+    find_path();
+    print_map();
     return 0;
 }
 
-
-
-void find()
+void find_path(void)
 {
-    int i, j;
+    //从1,1开始，终点是count-2,count-2,边框大小是1-count-1
+    int i, flag = 0;
+    int next_x, next_y;
+    int front = 0;
+    int rear = 1;
+    int decide = 0;
+    Path[0].X = 1;
+    Path[0].Y = 1;
+    Path[0].pre = -1;
+    while(front < rear)
+    {
+        for(i = 0; i < 4; i++)
+        {
+            next_x = Path[front].X + dx[i];
+            next_y = Path[front].Y + dy[i];
+            if(decide = (judge(next_x, next_y)))
+            {
+                visit[next_x][next_y] = 1;
+                Path[rear].X = next_x;
+                Path[rear].Y = next_y;
+                Path[rear].pre = front;
+                rear++;
+            }
+            if(next_x == count - 2 && next_y == count - 2)
+            {
+                out_put(rear - 1);
+                flag = 1;
+                break;
+            }
+        }
+        if(flag == 1)
+            break;
+        front++;
+    }
+}
+
+void out_put(int a)
+{
+    if(Path[a].pre != -1)
+    {
+        out_put(Path[a].pre);
+        map[Path[a].X][Path[a].Y] = 2;
+    }
+}
+
+int judge(int next_x, int next_y)
+{
+    if(map[next_x][next_y] == 5 && visit[next_x][next_y] == 0 && next_x >= 1 && next_x <= count - 2 && next_y >= 1 && next_y <= count - 2)
+        return 1;
+    else
+        return 0;
+}
+
+void print_map(void)
+{
+    int i = 0, j = 0;
     for(i = 0; i < count; i++)
     {
         for(j = 0; j < count; j++)
         {
-            if(map[i][j] == 3)
+            if(map[i][j] == 0)
+                printf("■");
+            else if(map[i][j] == 5)
             {
-                my_x = i;
-                my_y = j;
+                if(i == 1 && j == 1)
+                    printf("⊙");
+                else if( i == count - 2 && j == count - 2 )
+                    printf("★");
+                else
+                    printf(" ");
+            }
+            else if(map[i][j] == 2)
+            {
+                if( i == count - 2 && j == count - 2 )
+                    printf("★");
+                else
+                    printf("◇");
             }
         }
+        printf("\n");
     }
 }
-
-
 void print()
 {
     int i = 0, j = 0;
-    str[0] = '\0';
     //system("reset");
     for(i = 0; i < count ; i++)
     {
@@ -81,20 +153,20 @@ void print()
     }
 }
 
-
 void Initialize(int num)
 {
     int i,j;
     if(num % 2 == 0)
         count++;
-    for(i = 0; i < count; i++)//将地图全部初始化等于0
+    /*for(i = 0; i < count; i++)//将地图全部初始化等于0
     {
         for(j = 0; j < count; j++)
             map[i][j] = 0;
-    }
-    for(i = 0;i < M;i++)
+    }*/
+    memset(map,0,sizeof(map));
+    for(i = 0;i < SIZE;i++)
     {
-        for(j = 0; j < M; j++)
+        for(j = 0; j < SIZE; j++)
         {
             if(i >= count || j >= count)
                 map[i][j] = -1;
@@ -110,25 +182,15 @@ void Initialize(int num)
             }
         }
     }
-    if(level == 0)
-    {
-        Creat_01(1, 1);   
-    }
-    else if(level == 1)
-    {
-        map[1][1] = 5;
-        map[1][2] = 6;
-        map[2][1] = 6;
-        //Creat_02(1, 1);
-    }
+    Creat_01(1, 1);   
 }
 
 void Creat_01(int X_index, int Y_index)
 {
     int rand_position;//随机一个方向 
-    int x, y, flag = 0;
-    x = X_index;
-    y = Y_index;
+    int x1, y1, flag = 0;
+    x1 = X_index;
+    y1 = Y_index;
 
     //如果四个方向都没有了，返回上一步，否则继续
     while(1)
@@ -140,8 +202,8 @@ void Creat_01(int X_index, int Y_index)
         else 
         {
             map[X_index][Y_index] = 5;//即红色格子
-            x = X_index;
-            y = Y_index;
+            x1 = X_index;
+            y1 = Y_index;
             while(1)
             {
                 rand_position = rand() % 4;//随机得到一个方向
@@ -161,7 +223,7 @@ void Creat_01(int X_index, int Y_index)
                 {
                     Y_index = Y_index + 2;
                 }
-                map[(x + X_index) / 2][(y + Y_index) / 2] = 5;
+                map[(x1 + X_index) / 2][(y1 + Y_index) / 2] = 5;
                 map[X_index][Y_index] = 5;
                 Creat_01(X_index, Y_index);
                 break;
@@ -174,46 +236,15 @@ void Creat_01(int X_index, int Y_index)
 int IsHaveNeighbor(int X_index, int Y_index)
 {
     int i, j, flag = 0;
-    if(level == 0)
-    {
-        if((X_index >= 3 && map[X_index - 2][Y_index] == 1) || (X_index < count - 3 && map[X_index + 2][Y_index] == 1) || (Y_index >= 3 && map[X_index][Y_index - 2] == 1) || (Y_index < count - 3 && map[X_index][Y_index + 2] == 1))
-            return 1;
-        return 0;
-    }
+    if((X_index >= 3 && map[X_index - 2][Y_index] == 1) || (X_index < count - 3 && map[X_index + 2][Y_index] == 1) || (Y_index >= 3 && map[X_index][Y_index - 2] == 1) || (Y_index < count - 3 && map[X_index][Y_index + 2] == 1))
+        return 1;
+    return 0;
 }
 
 void menu()
 {
-    char select[10];
-    printf("分别用wasd控制人物移动，按ESC退出游戏\n");
     printf("请输入地图大小：");
     scanf("%d",&count);
-    printf("请输入游戏难度（1,2）：");
-    while(1)
-    {
-        scanf("%s",select);
-        if(strlen(select) > 1)
-        {
-            printf("错误输入，请重新输入\n");
-        }
-        else
-        {
-            if('1' == select[0])
-            {
-                level = 0;
-                break;
-            }
-            else if('2' == select[0])
-            {
-                level = 1;
-                break;
-            }
-            else
-            {
-                printf("错误输入，请重新输入\n");
-            }
-        }
-    }
 }
 
 
