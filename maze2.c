@@ -40,6 +40,8 @@ int visit[SIZE][SIZE] = {0};
 int map[SIZE + 1][SIZE + 1] = {0};
 int dx[4] = {0, 1, 0, -1};
 int dy[4] = {1, 0, -1, 0};
+int ptr[21][21];
+int visit_ptr[21][21];
 
 
 int main_menu();
@@ -58,6 +60,13 @@ void Creat_01();
 int IsHaveNeighbor();
 int judge();
 void out_put();
+void easy_maze();
+void open_file();
+void find_easy_path();
+int judge_easy();
+void out_easy();
+void out_easy_map();
+void write_file();
 
 void my_err(const char *err_string, int line)
 {
@@ -65,6 +74,172 @@ void my_err(const char *err_string, int line)
     perror(err_string);
     exit(1);
 }
+
+void open_file(void)
+{
+    int i, j;
+    int len,ret;
+    int fd;
+    char str[21];
+    memset(ptr, 0, sizeof(ptr));
+    memset(str, 0, sizeof(str));
+    if((fd = open("maze.txt", O_RDONLY)) == -1)
+    {
+        my_err("open", __LINE__);
+    }
+    else
+    {
+        memset(ptr, 0, sizeof(ptr));
+        for(i = 0; i < 21; i++)
+        {
+            if((len = read(fd, str, 21)) < 0)
+                my_err("read", __LINE__);
+            for(j = 0; j < 21; j++)
+            {
+                ptr[i][j] = str[j] - '0';
+                if(str[j] == '0')
+                    printf("■");
+                else if(str[j] == '1')
+                {
+                    if(i == 1 && j == 1)
+                        printf("⊙");
+                    else if(i == 19 && j == 19)
+                        printf("★");
+                    else 
+                        printf(" ");
+                }
+            }
+            printf("\n");
+        }
+        //sleep(3);
+    }
+    close(fd);
+}
+
+void easy_maze(void)
+{
+    open_file();
+    find_easy_path();
+    printf("\n");
+    out_easy_map();
+    write_file();
+    sleep(5);
+}
+
+void write_file()
+{
+    int q = 0,i = 0, j = 0;
+    int fd;
+    char str2[22];
+    memset(str2, 0, sizeof(str2));
+    if((fd = open("maze_2.txt", O_WRONLY|O_CREAT,S_IRUSR|S_IWUSR)) == -1)
+    {
+        my_err("open", __LINE__);
+    }
+    else
+    {
+        for(i = 0;i < 21; i++)
+        {
+            q = 0;
+            memset(str2, 0, sizeof(str2));
+            for(j = 0;j < 21; j++)
+            {
+                str2[q] = ptr[i][j] + '0';
+                q++;
+            }
+            write(fd, str2, sizeof(char )* 21);
+        }
+    }
+    close(fd);
+}
+
+
+void out_easy_map(void)
+{
+    int i = 0, j = 0;
+    for(i = 0; i < 21; i++)
+    {
+        for(j = 0; j < 21; j++)
+        {
+            if(ptr[i][j] == 0)
+                printf("■");
+            else if(ptr[i][j] == 2)
+            {
+                if(i == 1 && j == 1)
+                    printf("⊙");
+                else if(i == 19 && j == 19)
+                    printf("★");
+                else
+                    printf("◇");
+            }
+            else if(ptr[i][j] == 1)
+            {
+                if(i == 1 && j == 1)
+                    printf("⊙");
+                else
+                    printf(" ");
+            }
+        }
+        printf("\n");
+    }
+}
+
+void find_easy_path(void)
+{
+    memset(visit_ptr, 0, sizeof(visit_ptr));
+    memset(Path, 0 ,sizeof(Path));
+    int i, flag = 0;
+    int next_x,next_y;
+    int front = 0;
+    int rear = 1;
+    int decide = 0;
+    Path[0].X = 1;
+    Path[0].Y = 1;
+    Path[0].pre = -1;
+    while(front < rear)
+    {
+        for(i = 0; i < 4; i++)
+        {
+            next_x = Path[front].X + dx[i];
+            next_y = Path[front].Y + dy[i];
+            if(decide = (judge_easy(next_x, next_y)))
+            {
+                visit_ptr[next_x][next_y] = 1;
+                Path[rear].X = next_x;
+                Path[rear].Y = next_y;
+                Path[rear].pre = front;
+                rear++;
+            }
+            if(next_x == 19 && next_y == 19)
+            {
+                out_easy(rear - 1);
+                flag = 1;
+                break;
+            }
+        }
+        if(flag == 1)
+            break;
+        front++;
+    }
+}
+
+void out_easy(int a)
+{
+    if(Path[a].pre != -1)
+    {
+        out_easy(Path[a].pre);
+        ptr[Path[a].X][Path[a].Y] = 2;
+    }
+}
+
+int judge_easy(int next_x, int next_y)
+{
+    if(ptr[next_x][next_y] == 1 && visit_ptr[next_x][next_y] == 0 && next_x >= 1 && next_x <= 20 && next_y >= 1 && next_y <= 20)
+        return 1;
+    else
+        return 0;
+}
+
 
 int main_menu(void)
 {
@@ -508,6 +683,7 @@ int main(void)
                                     formation_menu();
                                     break;
                                 case 2:
+                                    easy_maze();
                                     break;
                                 case 3:
                                     difficult_maze();
