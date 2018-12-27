@@ -50,6 +50,17 @@ int dy[4] = {1, 0, -1, 0};
 
 int main_menu();
 int user_login_menu();
+int user_log_menu();
+int user_game__menu();
+void my_err();
+
+
+void my_err(const char *err_string,int line)
+{
+    fprintf(stderr,"line:%d ",line);
+    perror(err_string);
+    exit(1);
+}
 
 int main_menu(void)
 {
@@ -164,6 +175,8 @@ int user_log_menu(void)
         {
             printf("-- 输入名不按规范来\n");
             regfree(&regex);
+            printf("注册失败\n");
+            sleep(1);
             return 3;//
         }
         else
@@ -176,7 +189,7 @@ int user_log_menu(void)
         }
     }
     regfree(&regex);
-    regexInit = regcomp(&regex, "[a-zA-Z0-9]$",REG_EXTENDED);
+    regexInit = regcomp(&regex, "[0-9]$",REG_EXTENDED);
     if(regexInit)
     {
         my_err("regcomp", __LINE__);
@@ -187,10 +200,12 @@ int user_log_menu(void)
         if(REG_NOERROR != reti)
         {
             printf("-- 密码强度 简单\n");
+            sleep(1);
         }
         else
         {
             printf("-- 密码强度 复杂\n");
+            sleep(1);
         }
     }
     regfree(&regex);
@@ -205,6 +220,8 @@ int user_log_menu(void)
         if(strcmp(row[0],user_name) == 0)
         {
             mysql_free_result(res);
+            printf("\t\t该用户已经注册过\n");
+            sleep(1);
             return 2;
         }
     }
@@ -215,6 +232,8 @@ int user_log_menu(void)
     {
         printf("query:%s\n",mysql_error(&mysql));
     }
+    printf("注册成功\n");
+    sleep(1);
     return 0;
 }
 
@@ -226,11 +245,23 @@ int user_game__menu(void)
     printf("|            ★  欢迎来到迷宫游戏  ★               |\n");
     printf("|               1. 查看游戏说明                   |\n");
     printf("|               2. 简单等级                       |\n");
-    printf("|               3. 中等等级                       |\n");
-    printf("|               4. 困难等级                       |\n");
+    printf("|               3. 随机等级                       |\n");
     printf("---------------------------------------------------\n");
     printf("★ 请输入你的选择：");
     scanf("%d",&choice);
+}
+
+
+void formation_menu(void)
+{
+    printf("-----------------------------------------------------\n");
+    printf("|            ★   欢迎来到迷宫游戏   ★               |\n");
+    printf("|            ★  欢迎你查看游戏说明  ★               |\n");
+    printf("|    1. 简单等级： 你可以享受本游戏已经存在的迷宫图 |\n");
+    printf("|    2. 随机等级： 需要你输入你想要的迷宫的行数：   |\n");
+    printf("|            ★  欢迎及查看游戏说明  ★               |\n");
+    printf("|            ★   欢迎来到迷宫游戏   ★               |\n");
+    printf("-----------------------------------------------------\n");
 }
 
 
@@ -257,6 +288,17 @@ int main(void)
                         sleep(1);
                         system("reset");
                         choice3 = user_game__menu();
+                        switch(choice3)
+                        {
+                            case 1:
+                                formation_menu();
+                                break;
+                            case 2:
+                                
+                                break;
+                            case 3:
+                                break;
+                        }
                         break;
                     case 2:
                         printf("\t\t用户密码输入错误\n");
@@ -268,13 +310,14 @@ int main(void)
                 break;
             case 2://用户注册
                 printf("\t\t正在跳转...\n");
-                sleep(1);
+                sleep(0.5);
                 system("reset");
                 choice2 = user_log_menu();
                 switch(choice2)
                 {
                     case 1:
                         printf("\t\t注册成功!\n");
+                        sleep(1);
                         break;
                     case 2:
                         printf("\t\t该用户已经注册过了!\n");
